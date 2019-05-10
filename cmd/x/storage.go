@@ -5,9 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
-	"time"
 )
 
 type StorageClient struct {
@@ -32,10 +30,10 @@ func init() {
 	Storage = StorageClient{client}
 }
 
-func (client *StorageClient) Upload(filePath, object string) error {
+func (client *StorageClient) Upload(filePath, object string, fs FileSystem) error {
 	ctx := context.Background()
 
-	file, err := os.Open(filePath)
+	file, err := fs.Open(filePath)
 
 	if err != nil {
 		return err
@@ -59,29 +57,4 @@ func (client *StorageClient) Upload(filePath, object string) error {
 	}
 
 	return nil
-}
-
-func (client *StorageClient) SignedUrl(object string) (string, error) {
-	privKey, err := ioutil.ReadFile("key.pem")
-	if err != nil {
-		return "", err
-	}
-
-	accessKey, err := ioutil.ReadFile("access_key")
-	if err != nil {
-		return "", err
-	}
-
-	url, err := storage.SignedURL(bucket, object, &storage.SignedURLOptions{
-		GoogleAccessID: string(accessKey),
-		PrivateKey:     privKey,
-		Method:         "PUT",
-		Expires:        time.Now().Add(time.Second * 60),
-	})
-
-	if err != nil {
-		return "", err
-	}
-
-	return url, nil
 }
